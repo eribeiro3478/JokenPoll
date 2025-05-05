@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JokenPoll - Rock Paper Scissors Voting Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .team-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .btn-rock {
+            background-color: #e74c3c;
+        }
+        .btn-paper {
+            background-color: #f39c12;
+        }
+        .btn-scissors {
+            background-color: #2ecc71;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .stat-box {
+            flex: 1;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 0 5px;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 6px;
+            text-align: center;
+        }
+        #winner {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+            border-radius: 6px;
+        }
+        .winner-team-a {
+            background-color: #d4eeff;
+            color: #0066cc;
+        }
+        .winner-team-b {
+            background-color: #ffe6d4;
+            color: #cc3300;
+        }
+        .winner-tie {
+            background-color: #f0f0f0;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <h1>JokenPoll - Rock Paper Scissors Voting Game</h1>
+    <p>Vote for Rock, Paper, or Scissors with your team. After all votes are counted, the most popular choice from each team will compete!</p>
+    
+    <div id="connection">
+        <button id="connect" class="btn">Connect to MetaMask</button>
+        <div id="status"></div>
+    </div>
+    
+    <div class="container">
+        <div class="team-section">
+            <h2>Team A</h2>
+            <div class="btn-group">
+                <button class="btn btn-rock" onclick="voteTeamA(1)">Rock</button>
+                <button class="btn btn-paper" onclick="voteTeamA(2)">Paper</button>
+                <button class="btn btn-scissors" onclick="voteTeamA(3)">Scissors</button>
+            </div>
+            <div class="results" id="team-a-results">
+                <h3>Vote Counts</h3>
+                <p>Rock: <span id="team-a-rock">0</span></p>
+                <p>Paper: <span id="team-a-paper">0</span></p>
+                <p>Scissors: <span id="team-a-scissors">0</span></p>
+            </div>
+            <button class="btn" onclick="endVotingTeamA()">End Team A Voting</button>
+        </div>
+        
+        <div class="team-section">
+            <h2>Team B</h2>
+            <div class="btn-group">
+                <button class="btn btn-rock" onclick="voteTeamB(1)">Rock</button>
+                <button class="btn btn-paper" onclick="voteTeamB(2)">Paper</button>
+                <button class="btn btn-scissors" onclick="voteTeamB(3)">Scissors</button>
+            </div>
+            <div class="results" id="team-b-results">
+                <h3>Vote Counts</h3>
+                <p>Rock: <span id="team-b-rock">0</span></p>
+                <p>Paper: <span id="team-b-paper">0</span></p>
+                <p>Scissors: <span id="team-b-scissors">0</span></p>
+            </div>
+            <button class="btn" onclick="endVotingTeamB()">End Team B Voting</button>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="btn" id="end-game" onclick="endGame()">End Game & Determine Winner</button>
+        <button class="btn" id="reset-game" onclick="resetGame()">Reset Game</button>
+    </div>
+    
+    <div id="winner"></div>
+    
+    <div class="stats">
+        <div class="stat-box">
+            <h3>Games Played</h3>
+            <p id="total-games">0</p>
+        </div>
+        <div class="stat-box">
+            <h3>Team A Wins</h3>
+            <p id="team-a-wins">0</p>
+        </div>
+        <div class="stat-box">
+            <h3>Team B Wins</h3>
+            <p id="team-b-wins">0</p>
+        </div>
+        <div class="stat-box">
+            <h3>Ties</h3>
+            <p id="ties">0</p>
+        </div>
+    </div>
+    
+    <script>
+        // Contract ABIs (to be filled after contract compilation)
+        const jokenPollABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum JokenPoll.Winner",
+				"name": "winner",
+				"type": "uint8"
+			}
+		],
+		"name": "GameEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "teamAContract",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "teamBContract",
+				"type": "address"
+			}
+		],
+		"name": "GameStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "gameEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "choice",
+				"type": "uint256"
+			}
+		],
+		"name": "getChoiceName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getGameStats",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getTeamChoices",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "resetGame",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "teamA",
+		"outputs": [
+			{
+				"internalType": "contract TeamAVoting",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "teamAWins",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "teamB",
+		"outputs": [
+			{
+				"internalType": "contract TeamBVoting",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "teamBWins",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ties",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalGamesPlayed",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "winner",
+		"outputs": [
+			{
+				"internalType": "enum JokenPoll.Winner",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]; //need to insert after contract compilation
+        const teamAVotingABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum TeamAVoting.Choice",
+				"name": "choice",
+				"type": "uint8"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum TeamAVoting.Choice",
+				"name": "finalChoice",
+				"type": "uint8"
+			}
+		],
+		"name": "VotingEnded",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endVoting",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "finalChoice",
+		"outputs": [
+			{
+				"internalType": "enum TeamAVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getFinalChoice",
+		"outputs": [
+			{
+				"internalType": "enum TeamAVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getVoteCounts",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paperVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "resetVoting",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "rockVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "scissorsVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_choice",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "votes",
+		"outputs": [
+			{
+				"internalType": "enum TeamAVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "votingEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]; //need to insert after contract compilation
+        const teamBVotingABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum TeamBVoting.Choice",
+				"name": "choice",
+				"type": "uint8"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "enum TeamBVoting.Choice",
+				"name": "finalChoice",
+				"type": "uint8"
+			}
+		],
+		"name": "VotingEnded",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endVoting",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "finalChoice",
+		"outputs": [
+			{
+				"internalType": "enum TeamBVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getFinalChoice",
+		"outputs": [
+			{
+				"internalType": "enum TeamBVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getVoteCounts",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paperVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "resetVoting",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "rockVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "scissorsVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_choice",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "votes",
+		"outputs": [
+			{
+				"internalType": "enum TeamBVoting.Choice",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "votingEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+        
+        // Contract addresses
+        let jokenPollAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; //need to insert after contract compilation
+        let teamAAddress = '';
+        let teamBAddress = '';
+        
+        let web3;
+        let jokenPoll;
+        let teamA;
+        let teamB;
+        let accounts;
+        
+        // Check if MetaMask is installed on page load
+        window.addEventListener('load', async function() {
+            setTimeout(checkIfMetaMaskIsInstalled, 500); // Delay check to ensure MetaMask has time to inject
+        });
+        
+        // Function to check if MetaMask is installed
+        function checkIfMetaMaskIsInstalled() {
+            console.log("Checking for MetaMask...");
+            console.log("window.ethereum:", window.ethereum);
+            console.log("window.ethereum?.isMetaMask:", window.ethereum?.isMetaMask);
+            
+            // First check: does ethereum object exist?
+            if (typeof window.ethereum !== 'undefined') {
+                console.log("ethereum object exists");
+                
+                // Second check: is it actually MetaMask?
+                if (window.ethereum.isMetaMask) {
+                    console.log("MetaMask is detected!");
+                    document.getElementById('status').innerText = 'MetaMask is installed. Click Connect to proceed.';
+                } else {
+                    // Ethereum provider exists but isn't MetaMask
+                    console.log("Non-MetaMask ethereum provider detected");
+                    document.getElementById('status').innerText = 'Another wallet detected. Please enable MetaMask and disable other wallets.';
+                }
+            } else {
+                console.log("No ethereum provider detected");
+                document.getElementById('status').innerText = 'Please install MetaMask to use this application: https://metamask.io/download.html';
+                document.getElementById('connect').disabled = true;
+            }
+        }
+        
+        // Connect to MetaMask
+        document.getElementById('connect').addEventListener('click', async () => {
+            console.log("Connect button clicked");
+            
+            // Check for ethereum provider again when button is clicked
+            if (typeof window.ethereum !== 'undefined') {
+                if (!window.ethereum.isMetaMask) {
+                    document.getElementById('status').innerText = 'Another wallet detected. Please disable other wallets and enable MetaMask.';
+                    return;
+                }
+                
+                try {
+                    console.log('Connecting to MetaMask...');
+                    // Request account access
+                    web3 = new Web3(window.ethereum);
+                    
+                    // Check if MetaMask is locked
+                    let isLocked = false;
+                    try {
+                        const accounts = await web3.eth.getAccounts();
+                        isLocked = accounts.length === 0;
+                    } catch (e) {
+                        console.log("Error checking if MetaMask is locked:", e);
+                        isLocked = true;
+                    }
+                    
+                    if (isLocked) {
+                        console.log("MetaMask is locked. Requesting accounts...");
+                        document.getElementById('status').innerText = 'MetaMask is locked. Please unlock it and approve the connection.';
+                    }
+                    
+                    // Request accounts
+                    accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    if (accounts.length === 0) {
+                        document.getElementById('status').innerText = 'Please connect to MetaMask.';
+                        return;
+                    }
+                    
+                    console.log('Connected accounts:', accounts);
+                    document.getElementById('status').innerText = 'Connected: ' + accounts[0];
+                    
+                    // Initialize the JokenPoll contract
+                    try {
+                        console.log('Initializing JokenPoll contract at address:', jokenPollAddress);
+                        jokenPoll = new web3.eth.Contract(jokenPollABI, jokenPollAddress);
+                        
+                        // Get team addresses from the JokenPoll contract
+                        teamAAddress = await jokenPoll.methods.teamA().call();
+                        teamBAddress = await jokenPoll.methods.teamB().call();
+                        
+                        console.log('Team A address:', teamAAddress);
+                        console.log('Team B address:', teamBAddress);
+                        
+                        // Initialize team contracts
+                        teamA = new web3.eth.Contract(teamAVotingABI, teamAAddress);
+                        teamB = new web3.eth.Contract(teamBVotingABI, teamBAddress);
+                        
+                        // Update UI
+                        await updateVoteCounts();
+                        await updateGameStats();
+                        
+                        console.log('All contracts initialized successfully');
+                    } catch (contractError) {
+                        console.error('Contract initialization error:', contractError);
+                        document.getElementById('status').innerText = 'Contract error: ' + contractError.message;
+                    }
+                    
+                } catch (error) {
+                    console.error('MetaMask connection error:', error);
+                    document.getElementById('status').innerText = 'Connection failed: ' + error.message;
+                }
+            } else {
+                document.getElementById('status').innerText = 'Please install MetaMask!';
+            }
+        });
+        
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', function (accounts) {
+                console.log('Account changed to:', accounts[0]);
+                document.getElementById('status').innerText = 'Account changed to: ' + accounts[0];
+                // Reload the page to reset the state
+                window.location.reload();
+            });
+            
+            // Listen for chain changes
+            window.ethereum.on('chainChanged', function (chainId) {
+                console.log('Network changed to:', chainId);
+                document.getElementById('status').innerText = 'Network changed. Reloading...';
+                // Reload the page to reset the state
+                window.location.reload();
+            });
+        }
+        
+        // Vote for Team A
+        async function voteTeamA(choice) {
+            try {
+                await teamA.methods.vote(choice).send({ from: accounts[0] });
+                updateVoteCounts();
+            } catch (error) {
+                console.error('Error voting for Team A:', error);
+                document.getElementById('status').innerText = 'Team A Vote Error: ' + error.message;
+            }
+        }
+        
+        // Vote for Team B
+        async function voteTeamB(choice) {
+            try {
+                await teamB.methods.vote(choice).send({ from: accounts[0] });
+                updateVoteCounts();
+            } catch (error) {
+                console.error('Error voting for Team B:', error);
+                document.getElementById('status').innerText = 'Team B Vote Error: ' + error.message;
+            }
+        }
+        
+        // End voting for Team A
+        async function endVotingTeamA() {
+            try {
+                await teamA.methods.endVoting().send({ from: accounts[0] });
+                updateVoteCounts();
+                document.getElementById('status').innerText = 'Team A voting has ended';
+            } catch (error) {
+                console.error('Error ending Team A voting:', error);
+                document.getElementById('status').innerText = 'Team A End Voting Error: ' + error.message;
+            }
+        }
+        
+        // End voting for Team B
+        async function endVotingTeamB() {
+            try {
+                await teamB.methods.endVoting().send({ from: accounts[0] });
+                updateVoteCounts();
+                document.getElementById('status').innerText = 'Team B voting has ended';
+            } catch (error) {
+                console.error('Error ending Team B voting:', error);
+                document.getElementById('status').innerText = 'Team B End Voting Error: ' + error.message;
+            }
+        }
+        
+        // End game and determine winner
+        async function endGame() {
+            try {
+                await jokenPoll.methods.endGame().send({ from: accounts[0] });
+                const winner = await jokenPoll.methods.winner().call();
+                const choices = await jokenPoll.methods.getTeamChoices().call();
+                
+                const teamAChoice = await jokenPoll.methods.getChoiceName(choices[0]).call();
+                const teamBChoice = await jokenPoll.methods.getChoiceName(choices[1]).call();
+                
+                let winnerText = '';
+                let winnerClass = '';
+                
+                if (winner == 1) {
+                    winnerText = `Team A Wins! (${teamAChoice} beats ${teamBChoice})`;
+                    winnerClass = 'winner-team-a';
+                } else if (winner == 2) {
+                    winnerText = `Team B Wins! (${teamBChoice} beats ${teamAChoice})`;
+                    winnerClass = 'winner-team-b';
+                } else if (winner == 3) {
+                    winnerText = `It's a Tie! (Both teams chose ${teamAChoice})`;
+                    winnerClass = 'winner-tie';
+                }
+                
+                const winnerElement = document.getElementById('winner');
+                winnerElement.innerText = winnerText;
+                winnerElement.className = winnerClass;
+                
+                updateGameStats();
+                document.getElementById('status').innerText = 'Game ended successfully';
+            } catch (error) {
+                console.error('Error ending game:', error);
+                document.getElementById('status').innerText = 'End Game Error: ' + error.message;
+            }
+        }
+        
+        // Reset game for a new round
+        async function resetGame() {
+            try {
+                await jokenPoll.methods.resetGame().send({ from: accounts[0] });
+                document.getElementById('winner').innerText = '';
+                document.getElementById('winner').className = '';
+                updateVoteCounts();
+                document.getElementById('status').innerText = 'Game reset for a new round';
+            } catch (error) {
+                console.error('Error resetting game:', error);
+                document.getElementById('status').innerText = 'Reset Game Error: ' + error.message;
+            }
+        }
+        
+        // Update vote counts
+        async function updateVoteCounts() {
+            try {
+                console.log('Updating vote counts...');
+                // Update Team A vote counts
+                const teamACounts = await teamA.methods.getVoteCounts().call();
+                document.getElementById('team-a-rock').innerText = teamACounts[0];
+                document.getElementById('team-a-paper').innerText = teamACounts[1];
+                document.getElementById('team-a-scissors').innerText = teamACounts[2];
+                
+                // Update Team B vote counts
+                const teamBCounts = await teamB.methods.getVoteCounts().call();
+                document.getElementById('team-b-rock').innerText = teamBCounts[0];
+                document.getElementById('team-b-paper').innerText = teamBCounts[1];
+                document.getElementById('team-b-scissors').innerText = teamBCounts[2];
+                console.log('Vote counts updated successfully');
+            } catch (error) {
+                console.error('Error updating vote counts:', error);
+                document.getElementById('status').innerText = 'Error updating vote counts: ' + error.message;
+            }
+        }
+        
+        // Update game statistics
+        async function updateGameStats() {
+            try {
+                console.log('Updating game statistics...');
+                const stats = await jokenPoll.methods.getGameStats().call();
+                document.getElementById('total-games').innerText = stats[0];
+                document.getElementById('team-a-wins').innerText = stats[1];
+                document.getElementById('team-b-wins').innerText = stats[2];
+                document.getElementById('ties').innerText = stats[3];
+                console.log('Game statistics updated successfully');
+            } catch (error) {
+                console.error('Error updating game stats:', error);
+                document.getElementById('status').innerText = 'Error updating game stats: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html> 
