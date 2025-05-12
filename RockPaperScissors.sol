@@ -12,7 +12,7 @@ contract RockPaperScissors {
     }
     
     mapping(address => Vote) private votes;
-    address[] private voters; // Array to track all voters
+    address[] private voters; // arr track all voters
     
     uint256 private rockVotes;
     uint256 private paperVotes;
@@ -20,7 +20,7 @@ contract RockPaperScissors {
     uint256 private teamAVotes;
     uint256 private teamBVotes;
     
-    // Track votes by team and choice
+    // tracking votes by team and choice
     uint256 private teamARockVotes;
     uint256 private teamAPaperVotes;
     uint256 private teamAScissorsVotes;
@@ -28,7 +28,7 @@ contract RockPaperScissors {
     uint256 private teamBPaperVotes;
     uint256 private teamBScissorsVotes;
     
-    // Track if team choices were random
+    // tracking if team choices were random
     bool private teamAChoiceRandom;
     bool private teamBChoiceRandom;
     
@@ -65,7 +65,7 @@ contract RockPaperScissors {
         _;
     }
     
-    // Helper function to convert string to Choice enum
+    // convert string to Choice enum
     function stringToChoice(string memory _choice) internal pure returns (Choice) {
         bytes32 hashChoice = keccak256(abi.encodePacked(_choice));
         
@@ -80,7 +80,7 @@ contract RockPaperScissors {
         }
     }
     
-    // Helper function to convert string to Team enum
+    // convert string to Team enum
     function stringToTeam(string memory _team) internal pure returns (Team) {
         bytes32 hashTeam = keccak256(abi.encodePacked(_team));
         
@@ -93,7 +93,7 @@ contract RockPaperScissors {
         }
     }
     
-    // Helper function to convert Choice enum to string
+    // convert Choice enum to string
     function choiceToString(Choice _choice) internal pure returns (string memory) {
         if (_choice == Choice.Rock) {
             return "Rock";
@@ -106,7 +106,7 @@ contract RockPaperScissors {
         }
     }
     
-    // Helper function to convert Team enum to string
+    // convert Team enum to string
     function teamToString(Team _team) internal pure returns (string memory) {
         if (_team == Team.A) {
             return "Team A";
@@ -117,7 +117,7 @@ contract RockPaperScissors {
         }
     }
     
-    // Vote with string inputs
+    // Voting
     function castVote(string memory _choice, string memory _team) external votingIsOpen {
         require(!votes[msg.sender].hasVoted, "Already voted");
         
@@ -198,7 +198,7 @@ contract RockPaperScissors {
         }
     }
     
-    // Helper function to count votes for a specific choice and team
+    // count votes for a specific choice and team
     function countTeamChoice(Choice choice, Team team) private view returns (uint256) {
         if (team == Team.A) {
             if (choice == Choice.Rock) return teamARockVotes;
@@ -511,8 +511,8 @@ contract RockPaperScissors {
             string(abi.encodePacked("Team B selected ", teamBChoiceStr, ". "));
             
         result = string(abi.encodePacked(result, teamAInfo, teamBInfo));
-        
-        // Add winner explanation without vote counts
+
+
         if (winningTeam == Team.A) {
             if (
                 (teamAChoice == Choice.Rock && teamBChoice == Choice.Scissors) ||
@@ -546,9 +546,8 @@ contract RockPaperScissors {
         return result;
     }
     
-    // Owner-only functions - accessible only to the contract owner
+    // accessible only to the contract owner
     
-    // Get the complete game state with detailed information
     function getGameState() external view onlyOwner returns (
         bool isVotingOpen,
         uint256 totalRockVotes,
@@ -571,7 +570,6 @@ contract RockPaperScissors {
         );
     }
     
-    // Check if a specific address has voted and what they voted for
     function getVoteDetails(address voter) external view onlyOwner returns (bool hasVoted, string memory choice, string memory team) {
         Vote memory voterInfo = votes[voter];
         return (
@@ -581,7 +579,6 @@ contract RockPaperScissors {
         );
     }
     
-    // Get detailed game result information with vote counts
     function getDetailedGameResult() external view onlyOwner votingIsOver returns (string memory) {
         return generateResultDetails();
     }
